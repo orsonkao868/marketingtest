@@ -426,7 +426,7 @@ canvas { max-height: 180px; }
 /* ── OPERATOR CARDS ── */
 .op-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
 }
 .op-card {
@@ -434,13 +434,63 @@ canvas { max-height: 180px; }
   border-radius: var(--r);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  padding: 16px 18px;
+  overflow: hidden;
+  transition: all .2s;
+}
+.op-card:hover { box-shadow: var(--shadow-md); }
+.op-card-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: all .2s;
+  padding: 16px 18px;
+  cursor: pointer;
+  user-select: none;
 }
-.op-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.op-card-header:hover { background: rgba(255,255,255,.03); }
+.op-expand-icon {
+  margin-left: auto;
+  font-size: 16px;
+  color: var(--text3);
+  transition: transform .25s;
+  flex-shrink: 0;
+}
+.op-card.expanded .op-expand-icon { transform: rotate(180deg); }
+.op-locations {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 12px 18px 14px;
+  background: rgba(0,0,0,.15);
+}
+.op-card.expanded .op-locations { display: block; }
+.op-locations-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+.op-loc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+.op-loc-item {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.3;
+  cursor: pointer;
+  transition: all .15s;
+}
+.op-loc-item:hover {
+  background: rgba(37,99,235,.12);
+  border-color: var(--blue);
+  color: var(--blue);
+}
 .op-rank-num {
   font-size: 24px;
   font-weight: 900;
@@ -583,6 +633,62 @@ canvas { max-height: 180px; }
   .chart-row, .section-row { grid-template-columns: 1fr; }
   .sidebar { display: none; }
 }
+
+.btn-export {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.75);
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s;
+  margin-left: 10px;
+}
+.btn-export:hover { border-color: rgba(255,255,255,.5); color: white; background: rgba(255,255,255,.07); }
+.export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #1a2030;
+  border: 1px solid #2a3548;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 150;
+  display: none;
+}
+.export-menu.open { display: block; }
+.export-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s;
+  text-decoration: none;
+}
+.export-item:hover { background: rgba(255,255,255,.06); }
+.export-icon {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.export-icon.json { background: rgba(37,99,235,.2); }
+.export-icon.csv  { background: rgba(5,150,105,.2); }
+.export-item-label { font-size: 13px; font-weight: 600; color: #e8edf5; }
+.export-item-sub   { font-size: 11px; color: #4a5f78; margin-top: 1px; }
+.export-sep { height: 1px; background: #1e2836; margin: 6px 0; }
+
 </style>
 </head>
 <body>
@@ -599,6 +705,42 @@ canvas { max-height: 180px; }
     <button class="topbar-nav-btn" onclick="showPage('shops',this)">販賣店</button>
     <button class="topbar-nav-btn" onclick="showPage('parking',this)">停車場</button>
     <button class="topbar-nav-btn" onclick="showPage('operators',this)">廠商</button>
+      <div style="position:relative;" id="export-wrap">
+      <button class="btn-export" onclick="toggleExport(event)">
+        ↓ 匯出資料
+      </button>
+      <div class="export-menu" id="export-menu">
+        <div class="export-item" onclick="exportJSON()">
+          <div class="export-icon json">{ }</div>
+          <div>
+            <div class="export-item-label">匯出 JSON</div>
+            <div class="export-item-sub">完整資料，含所有修改</div>
+          </div>
+        </div>
+        <div class="export-sep"></div>
+        <div class="export-item" onclick="exportCSV('contracts')">
+          <div class="export-icon csv">📋</div>
+          <div>
+            <div class="export-item-label">匯出契約 CSV</div>
+            <div class="export-item-sub">可直接用 Excel 開啟</div>
+          </div>
+        </div>
+        <div class="export-item" onclick="exportCSV('shops')">
+          <div class="export-icon csv">🏪</div>
+          <div>
+            <div class="export-item-label">匯出販賣店 CSV</div>
+            <div class="export-item-sub">販賣店空間資料</div>
+          </div>
+        </div>
+        <div class="export-item" onclick="exportCSV('parkings')">
+          <div class="export-icon csv">🅿️</div>
+          <div>
+            <div class="export-item-label">匯出停車場 CSV</div>
+            <div class="export-item-sub">停車場明細資料</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -13825,19 +13967,69 @@ function buildParking() {
 // ─── OPERATORS ───────────────────────────────────────
 function buildOperators() {
   document.getElementById('op-grid').innerHTML = operators.map((op, i) => {
-    const keys = Object.keys(op);
-    const name = op[keys[0]] || '—';
-    const cnt = op[keys[1]] || 0;
+    const name = op['實際經營廠商'] || op[Object.keys(op)[0]] || '—';
+    const cnt = op['點位數'] || op[Object.keys(op)[1]] || 0;
+    const detail = op['點位詳情'] || '';
+    const locs = detail ? detail.split('\n').filter(Boolean) : [];
     const rankCls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-    return `<div class="op-card">
-      <div class="op-rank-num ${rankCls}">${i+1}</div>
-      <div class="op-info">
-        <div class="op-name">${name}</div>
-        <div class="op-detail">點位 ${cnt} 處</div>
+    const locItems = locs.map(l => `<div class="op-loc-item" onclick="jumpToShop('${l.replace(/'/g,"\'")}',event)">${l}</div>`).join('');
+    return `<div class="op-card" id="op-${i}">
+      <div class="op-card-header" onclick="toggleOp(${i})">
+        <div class="op-rank-num ${rankCls}">${i+1}</div>
+        <div class="op-info">
+          <div class="op-name">${name}</div>
+          <div class="op-detail">點位 ${cnt} 處</div>
+        </div>
+        <div class="op-pill">${cnt}</div>
+        ${locs.length ? '<div class="op-expand-icon">▾</div>' : ''}
       </div>
-      <div class="op-pill">${cnt}</div>
+      ${locs.length ? `<div class="op-locations">
+        <div class="op-locations-title">管理點位（${locs.length} 處）</div>
+        <div class="op-loc-grid">${locItems}</div>
+      </div>` : ''}
     </div>`;
   }).join('');
+}
+
+function toggleOp(i) {
+  const card = document.getElementById('op-' + i);
+  card.classList.toggle('expanded');
+}
+
+function jumpToShop(name, e) {
+  e.stopPropagation();
+  // Switch to shops page and search
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn, .topbar-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-shops').classList.add('active');
+  document.querySelectorAll('.topbar-nav-btn').forEach(b => {
+    if (b.textContent.trim() === '販賣店') b.classList.add('active');
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.includes('販賣店')) b.classList.add('active');
+  });
+  // Search for the location
+  const srch = document.getElementById('srch-sh');
+  // Extract station name (remove 號販賣店 etc)
+  const stationMatch = name.match(/^(.+?站)/);
+  srch.value = stationMatch ? stationMatch[1] : name;
+  filterSh();
+  // Scroll to top of main
+  document.querySelector('.main').scrollTo(0, 0);
+  showJumpToast(name);
+}
+
+function showJumpToast(name) {
+  const t = document.getElementById('toast');
+  t.querySelector('.toast-icon').textContent = '🔍';
+  const node = t.childNodes[1];
+  if (node) node.textContent = ' 跳轉至：' + name;
+  t.classList.add('show');
+  setTimeout(() => {
+    t.classList.remove('show');
+    t.querySelector('.toast-icon').textContent = '✓';
+    if (node) node.textContent = ' 已儲存成功';
+  }, 2500);
 }
 
 // ─── MODAL ──────────────────────────────────────────
@@ -13957,6 +14149,75 @@ function showPage(id, el) {
     if (b.textContent.trim().startsWith(el.textContent.trim().slice(0,2))) b.classList.add('active');
   });
   el.classList.add('active');
+}
+
+
+// ─── EXPORT ─────────────────────────────────────────
+function toggleExport(e) {
+  e.stopPropagation();
+  document.getElementById('export-menu').classList.toggle('open');
+}
+document.addEventListener('click', () => {
+  document.getElementById('export-menu').classList.remove('open');
+});
+
+function exportJSON() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    contracts,
+    shops,
+    parkings,
+    operators
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  triggerDownload(blob, '商管中心資料_' + dateStr() + '.json');
+  showExportToast('JSON');
+}
+
+function exportCSV(dataset) {
+  const dataMap = { contracts, shops, parkings };
+  const rows = dataMap[dataset];
+  if (!rows || !rows.length) return;
+  const keys = Object.keys(rows[0]);
+  const csvRows = [keys.map(k => '"' + String(k).replace(/"/g,'""') + '"').join(',')];
+  rows.forEach(row => {
+    csvRows.push(keys.map(k => {
+      const v = row[k] ?? '';
+      return '"' + String(v).replace(/"/g,'""') + '"';
+    }).join(','));
+  });
+  const BOM = '\uFEFF'; // UTF-8 BOM for Excel
+  const blob = new Blob([BOM + csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const nameMap = { contracts: '契約', shops: '販賣店', parkings: '停車場' };
+  triggerDownload(blob, '商管中心_' + nameMap[dataset] + '_' + dateStr() + '.csv');
+  showExportToast('CSV');
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  document.getElementById('export-menu').classList.remove('open');
+}
+
+function dateStr() {
+  const d = new Date();
+  return d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2);
+}
+
+function showExportToast(type) {
+  const t = document.getElementById('toast');
+  t.querySelector('.toast-icon').textContent = '↓';
+  t.querySelector('.toast-icon').nextSibling.textContent = ' 已匯出 ' + type + ' 檔案';
+  t.classList.add('show');
+  setTimeout(() => {
+    t.classList.remove('show');
+    t.querySelector('.toast-icon').textContent = '✓';
+  }, 2500);
 }
 
 init();
