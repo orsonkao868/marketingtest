@@ -652,6 +652,33 @@ canvas { max-height: 180px; }
 .export-sep { height: 1px; background: #1e2836; margin: 6px 0; }
 
 </style>
+/* =============================
+   LAYOUT FIX (minimal change)
+   ============================= */
+
+.layout {
+  overflow: visible;
+  min-height: calc(100vh - 60px);
+}
+
+.sidebar {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  overflow-y: auto;
+}
+
+.card-body canvas {
+  width: 100% !important;
+  max-width: 100%;
+}
+``
 </head>
 <body>
 
