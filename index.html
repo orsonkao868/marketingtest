@@ -989,8 +989,8 @@ async function writeBack(dataset, rowIndex, data) {
 }
 
 // ─── OVERVIEW ───────────────────────────────────────
-function buildOverview() {
-  const stats = DATA.stats;
+function buildOverview(stats) {
+  if (!stats) return;
   document.getElementById('kpi-total').textContent = stats.total_contracts;
   document.getElementById('kpi-active').textContent = stats.status_counts['履約中'] || 0;
   document.getElementById('kpi-3m').textContent = stats.status_counts['3個月內屆期'] || 0;
