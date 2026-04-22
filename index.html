@@ -140,8 +140,8 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .nav-btn.active .nav-count { background: rgba(37,99,235,.15); color: var(--blue); }
 
 /* ── MAIN ── */
-.main { flex: 1; overflow: hidden; }
-.page { display: none; padding: 28px; min-height: calc(100vh - 60px); }
+.main { flex: 1; overflow-y: auto; min-width: 0; }
+.page { display: none; padding: 24px 28px; }
 .page.active { display: block; }
 
 /* ── PAGE HEADER ── */
@@ -158,7 +158,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 /* ── KPI ROW ── */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -194,7 +194,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 /* ── CHART GRID ── */
 .chart-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.4fr;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -320,7 +320,7 @@ canvas { max-height: 180px; }
 /* ── CONTRACT CARDS ── */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
 }
 .contract-card {
@@ -588,9 +588,9 @@ canvas { max-height: 180px; }
 
 /* ── MISC ── */
 .empty { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 14px; }
-.section-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+.section-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
 
-@media (max-width: 900px) {
+@media (max-width: 720px) {
   .kpi-row { grid-template-columns: repeat(2, 1fr); }
   .chart-row, .section-row { grid-template-columns: 1fr; }
   .sidebar { display: none; }
