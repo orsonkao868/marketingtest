@@ -652,34 +652,27 @@ canvas { max-height: 180px; }
 .export-sep { height: 1px; background: #1e2836; margin: 6px 0; }
 
 </style>
-/* =============================
-   LAYOUT FIX (minimal change)
-   ============================= */
+/* ========= LAYOUT HOTFIX (step 1) ========= */
 
+/* 恢復 layout 為受控容器 */
 .layout {
-  overflow: visible;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
+  overflow: hidden;   /* ← 改回來 */
 }
 
+/* sidebar 不動 sticky，只修寬度行為 */
 .sidebar {
-  position: relative;
-  height: 100%;
   flex-shrink: 0;
 }
 
+/* 關鍵：main 允許被 flex 壓縮 */
 .main {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: auto;
+  flex: 1;
+  min-width: 0;       /* ✅ 真正核心 */
+  height: 100%;
   overflow-y: auto;
 }
 
-.card-body canvas {
-  width: 100% !important;
-  max-width: 100%;
-}
-``
-</head>
 <body>
 
 <div class="topbar">
