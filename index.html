@@ -883,6 +883,22 @@ canvas { max-height: 180px; }
 
 <div class="toast" id="toast"><span class="toast-icon">✓</span> 已儲存成功</div>
 
+<!-- Loading Overlay -->
+<div id="loading-overlay" style="
+  position:fixed;inset:0;background:rgba(10,12,16,.88);
+  z-index:999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;">
+  <div style="width:44px;height:44px;border:3px solid #1e2836;
+    border-top-color:#2563eb;border-radius:50%;
+    animation:spin .8s linear infinite;"></div>
+  <div id="loading-msg" style="font-size:14px;color:#94a3b8;font-family:'Noto Sans TC',sans-serif;"></div>
+  <button id="loading-retry" onclick="init()" style="
+    display:none;padding:8px 18px;background:#2563eb;color:white;
+    border:none;border-radius:8px;font-size:13px;cursor:pointer;
+    font-family:'Noto Sans TC',sans-serif;font-weight:600;">重新載入</button>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
 <script>
 // ── Google Sheets Web App URL ──────────────────────────
 // 填入你的 Apps Script 部署網址
@@ -1500,21 +1516,6 @@ function showExportToast(type) {
 init();
 </script>
 
-<!-- Loading Overlay -->
-<div id="loading-overlay" style="
-  position:fixed;inset:0;background:rgba(10,12,16,.88);
-  z-index:999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;">
-  <div style="width:44px;height:44px;border:3px solid #1e2836;
-    border-top-color:#2563eb;border-radius:50%;
-    animation:spin .8s linear infinite;"></div>
-  <div id="loading-msg" style="font-size:14px;color:#94a3b8;font-family:'Noto Sans TC',sans-serif;"></div>
-  <button id="loading-retry" onclick="init()" style="
-    display:none;padding:8px 18px;background:#2563eb;color:white;
-    border:none;border-radius:8px;font-size:13px;cursor:pointer;
-    font-family:'Noto Sans TC',sans-serif;font-weight:600;">重新載入</button>
-</div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 </body>
 </html>
