@@ -48,8 +48,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
   align-items: center;
   padding: 0 24px;
   gap: 16px;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
@@ -84,7 +83,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .topbar-nav-btn.active { background: rgba(255,255,255,.12); color: white; }
 
 /* ── LAYOUT ── */
-.layout { display: flex; min-height: calc(100vh - 60px); }
+.layout { display: flex; height: calc(100vh - 60px); overflow: hidden; }
 
 .sidebar {
   width: 220px;
@@ -93,9 +92,10 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
   border-right: 1px solid var(--border);
   padding: 20px 12px;
   position: sticky;
-  top: 60px;
+  top: 0;
   height: calc(100vh - 60px);
   overflow-y: auto;
+  align-self: flex-start;
 }
 .sidebar-section {
   font-size: 10px;
@@ -140,7 +140,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .nav-btn.active .nav-count { background: rgba(37,99,235,.15); color: var(--blue); }
 
 /* ── MAIN ── */
-.main { flex: 1; overflow-y: auto; min-width: 0; }
+.main { flex: 1; overflow-y: auto; min-width: 0; height: 100%; }
 .page { display: none; padding: 24px 28px; }
 .page.active { display: block; }
 
@@ -858,6 +858,8 @@ canvas { max-height: 180px; }
   </div>
 </div>
 
+</div><!-- /layout -->
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="maybeClose(event)">
   <div class="modal">
@@ -1513,7 +1515,11 @@ function showExportToast(type) {
   }, 2500);
 }
 
-init();
+// 不自動載入，等使用者按刷新
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loading-overlay').style.display = 'none';
+  document.getElementById('last-updated').textContent = '請按刷新載入資料';
+});
 </script>
 
 
