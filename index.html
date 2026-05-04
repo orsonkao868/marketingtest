@@ -280,7 +280,6 @@ body {
 }
 .card-body { padding: 14px 16px; }
 canvas { max-height: 200px; }
-#chart-station { max-height: 420px; }
 
 .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
 
@@ -695,9 +694,12 @@ canvas { max-height: 200px; }
       </div>
       <div class="chart-row">
         <div class="card"><div class="card-head">契約狀態分佈</div><div class="card-body"><canvas id="chart-status"></canvas></div></div>
-        <div class="card"><div class="card-head">各站月租金（萬元）</div><div class="card-body" style="overflow-y:auto;max-height:440px;"><canvas id="chart-station"></canvas></div></div>
+        
         <div class="card"><div class="card-head">路線別件數</div><div class="card-body"><canvas id="chart-line"></canvas></div></div>
       </div>
+      <!-- 各站月租金 -->
+      <div class="station-rev-row" id="station-rev-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
+
       <div class="two-col">
         <div class="card"><div class="card-head">即將屆期預警</div><div class="card-body" id="expiry-list" style="max-height:280px;overflow-y:auto;"></div></div>
         <div class="card"><div class="card-head">招商進行中</div><div class="card-body" id="bidding-list" style="max-height:280px;overflow-y:auto;"></div></div>
@@ -856,44 +858,42 @@ function buildOverview(stats) {
     options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11, family: 'Noto Sans TC' }, boxWidth: 10, padding: 8 } } }, cutout: '55%' }
   });
 
-  // 各站月租金長條圖
+  // 各站月租金計算
   const UNDERGROUND = ['中山地下街', '西門地下街', '東區地下街'];
   const stationRev = {};
+  let totalRev = 0;
   contracts.forEach(c => {
     const label = c['標的拆分 標籤'] || '';
     if (label === '停車場') return;
-    // 地下街用標的拆分路線欄位判斷，車站用車站不分線
-    let station = c['車站 不分線'] || c['拆分 所屬車站'] || '未知';
-    // 地下街特殊處理
     const target = c['標的拆分'] || '';
+    let station = null;
     for (const ug of UNDERGROUND) {
-      if (target.includes(ug) || station.includes(ug)) { station = ug; break; }
+      if (target.includes(ug)) { station = ug; break; }
+    }
+    if (!station) {
+      const m = target.match(/^(.+?站)/);
+      if (m) station = m[1];
     }
     const amt = parseFloat(c['金額 拆分']) || 0;
-    stationRev[station] = (stationRev[station] || 0) + amt;
+    totalRev += amt;
+    if (station) stationRev[station] = (stationRev[station] || 0) + amt;
   });
-  // 排序取前20站
-  const stationEntries = Object.entries(stationRev)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20);
-  const stationLabels = stationEntries.map(e => e[0]);
-  const stationVals = stationEntries.map(e => Math.round(e[1] / 10000 * 100) / 100);
 
-  charts.station = new Chart(document.getElementById('chart-station'), {
-    type: 'bar',
-    data: {
-      labels: stationLabels,
-      datasets: [{ data: stationVals, backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }]
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.x + ' 萬元' } } },
-      scales: {
-        x: { grid: { color: '#1e2836' }, ticks: { color: '#c8d4e3', font: { size: 11 }, callback: v => v + '萬' } },
-        y: { grid: { display: false }, ticks: { color: '#c8d4e3', font: { size: 11, family: 'Noto Sans TC' } } }
-      }
-    }
-  });
+  // 顯示四個數字卡片
+  const fmt = v => (Math.round(v / 10000 * 10) / 10).toLocaleString() + ' 萬';
+  const revItems = [
+    { label: '所有車站合計', val: totalRev, color: '#2563eb' },
+    { label: '中山地下街', val: stationRev['中山地下街'] || 0, color: '#0891b2' },
+    { label: '西門地下街', val: stationRev['西門地下街'] || 0, color: '#7c3aed' },
+    { label: '東區地下街', val: stationRev['東區地下街'] || 0, color: '#059669' },
+  ];
+  document.getElementById('station-rev-row').innerHTML = revItems.map(item => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;border-left:3px solid ${item.color};">
+      <div style="font-size:11px;color:var(--text2);font-weight:600;letter-spacing:.04em;margin-bottom:6px;">${item.label}</div>
+      <div style="font-size:22px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;line-height:1;">${fmt(item.val)}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">月租金</div>
+    </div>
+  `).join('');
 
   const mainLines = ['1文湖線','2淡水信義線','3松山新店線','4中和新蘆線','5板南線'];
   const lnc = stats.line_counts || {};
