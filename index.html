@@ -280,6 +280,7 @@ body {
 }
 .card-body { padding: 14px 16px; }
 canvas { max-height: 200px; }
+#chart-station { max-height: 420px; }
 
 .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
 
@@ -694,7 +695,7 @@ canvas { max-height: 200px; }
       </div>
       <div class="chart-row">
         <div class="card"><div class="card-head">契約狀態分佈</div><div class="card-body"><canvas id="chart-status"></canvas></div></div>
-        <div class="card"><div class="card-head">標的類型</div><div class="card-body"><canvas id="chart-label"></canvas></div></div>
+        <div class="card"><div class="card-head">各站月租金（萬元）</div><div class="card-body" style="overflow-y:auto;max-height:440px;"><canvas id="chart-station"></canvas></div></div>
         <div class="card"><div class="card-head">路線別件數</div><div class="card-body"><canvas id="chart-line"></canvas></div></div>
       </div>
       <div class="two-col">
@@ -855,13 +856,43 @@ function buildOverview(stats) {
     options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11, family: 'Noto Sans TC' }, boxWidth: 10, padding: 8 } } }, cutout: '55%' }
   });
 
-  const lc = stats.label_counts || {};
-  const lKeys = Object.keys(lc);
-  const pieColors = ['#2563eb','#0891b2','#059669','#d97706','#7c3aed','#dc2626','#64748b','#f97316'];
-  charts.label = new Chart(document.getElementById('chart-label'), {
-    type: 'pie',
-    data: { labels: lKeys, datasets: [{ data: lKeys.map(k => lc[k]), backgroundColor: pieColors, borderWidth: 2, borderColor: '#161a23' }] },
-    options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11, family: 'Noto Sans TC' }, boxWidth: 10, padding: 8 } } } }
+  // 各站月租金長條圖
+  const UNDERGROUND = ['中山地下街', '西門地下街', '東區地下街'];
+  const stationRev = {};
+  contracts.forEach(c => {
+    const label = c['標的拆分 標籤'] || '';
+    if (label === '停車場') return;
+    // 地下街用標的拆分路線欄位判斷，車站用車站不分線
+    let station = c['車站 不分線'] || c['拆分 所屬車站'] || '未知';
+    // 地下街特殊處理
+    const target = c['標的拆分'] || '';
+    for (const ug of UNDERGROUND) {
+      if (target.includes(ug) || station.includes(ug)) { station = ug; break; }
+    }
+    const amt = parseFloat(c['金額 拆分']) || 0;
+    stationRev[station] = (stationRev[station] || 0) + amt;
+  });
+  // 排序取前20站
+  const stationEntries = Object.entries(stationRev)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20);
+  const stationLabels = stationEntries.map(e => e[0]);
+  const stationVals = stationEntries.map(e => Math.round(e[1] / 10000 * 100) / 100);
+
+  charts.station = new Chart(document.getElementById('chart-station'), {
+    type: 'bar',
+    data: {
+      labels: stationLabels,
+      datasets: [{ data: stationVals, backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.x + ' 萬元' } } },
+      scales: {
+        x: { grid: { color: '#1e2836' }, ticks: { color: '#c8d4e3', font: { size: 11 }, callback: v => v + '萬' } },
+        y: { grid: { display: false }, ticks: { color: '#c8d4e3', font: { size: 11, family: 'Noto Sans TC' } } }
+      }
+    }
   });
 
   const mainLines = ['1文湖線','2淡水信義線','3松山新店線','4中和新蘆線','5板南線'];
