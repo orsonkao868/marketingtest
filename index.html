@@ -860,32 +860,38 @@ function buildOverview(stats) {
 
   // 各站月租金計算
   const UNDERGROUND = ['中山地下街', '西門地下街', '東區地下街'];
-  const stationRev = {};
-  let totalRev = 0;
+  const ugRev = { '中山地下街': 0, '西門地下街': 0, '東區地下街': 0 };
+  let stationOnlyRev = 0; // 非地下街車站加總
+  let grandTotal = 0;
+
   contracts.forEach(c => {
     const label = c['標的拆分 標籤'] || '';
     if (label === '停車場') return;
     const target = c['標的拆分'] || '';
-    let station = null;
-    for (const ug of UNDERGROUND) {
-      if (target.includes(ug)) { station = ug; break; }
-    }
-    if (!station) {
-      const m = target.match(/^(.+?站)/);
-      if (m) station = m[1];
-    }
     const amt = parseFloat(c['金額 拆分']) || 0;
-    totalRev += amt;
-    if (station) stationRev[station] = (stationRev[station] || 0) + amt;
+    grandTotal += amt;
+
+    let isUG = false;
+    for (const ug of UNDERGROUND) {
+      if (target.includes(ug)) {
+        ugRev[ug] += amt;
+        isUG = true;
+        break;
+      }
+    }
+    if (!isUG) stationOnlyRev += amt;
   });
 
+  // 更新 KPI 月租金合計（等於 grandTotal）
+  document.getElementById('kpi-rev').textContent = Math.round(grandTotal / 10000).toLocaleString();
+
   // 顯示四個數字卡片
-  const fmt = v => (Math.round(v / 10000 * 10) / 10).toLocaleString() + ' 萬';
+  const fmt = v => Math.round(v / 10000).toLocaleString() + ' 萬';
   const revItems = [
-    { label: '所有車站合計', val: totalRev, color: '#2563eb' },
-    { label: '中山地下街', val: stationRev['中山地下街'] || 0, color: '#0891b2' },
-    { label: '西門地下街', val: stationRev['西門地下街'] || 0, color: '#7c3aed' },
-    { label: '東區地下街', val: stationRev['東區地下街'] || 0, color: '#059669' },
+    { label: '一般車站合計', val: stationOnlyRev, color: '#2563eb' },
+    { label: '中山地下街', val: ugRev['中山地下街'], color: '#0891b2' },
+    { label: '西門地下街', val: ugRev['西門地下街'], color: '#7c3aed' },
+    { label: '東區地下街', val: ugRev['東區地下街'], color: '#059669' },
   ];
   document.getElementById('station-rev-row').innerHTML = revItems.map(item => `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;border-left:3px solid ${item.color};">
